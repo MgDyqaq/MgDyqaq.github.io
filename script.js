@@ -25,7 +25,7 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
         await fetch(`https://api.github.com/repos/MgDyqaq/MgDyqaq.github.io/actions/workflows/judge.yml/dispatches`, {
             method: 'POST',
             headers: {
-                'Authorization': 'token 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', // Replace with your PAT
+                'Authorization': 'token None', // Replace with your PAT
                 'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
