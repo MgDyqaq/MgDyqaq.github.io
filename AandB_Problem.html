@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>御笔亲批 | A+B Problem | 大明 OJ | MingDynasty</title>
+  <link rel="icon" href="https://MingDynasty1.github.io/000000000000000000.png" type="image/png">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📜 御笔亲批 · A+B 问题</h1>
+            <button id="theme-toggle">🌓 切换明暗</button>
+        </header>
+
+        <main>
+            <section class="problem-desc">
+                <h2>【题目背景】</h2>
+                <p>大明洪武年间，户部尚书需统计两省赋税之和。今有甲省赋税 A 两，乙省赋税 B 两，请计算其总和。</p>
+                
+                <h2>【输入格式】</h2>
+                <p>一行，两个整数 A, B （使用 long long 类型）。</p>
+                
+                <h2>【输出格式】</h2>
+                <p>一行，一个整数，表示 A+B 的结果。</p>
+                
+                <h2>【样例输入】</h2>
+                <pre>1 2</pre>
+                
+                <h2>【样例输出】</h2>
+                <pre>3</pre>
+                
+                <h2>【数据范围】</h2>
+                <p>对于 100% 的数据，-10^18 ≤ A, B ≤ 10^18。</p>
+            </section>
+
+            <section class="submission-area">
+                <h2>✍️ 呈递奏折（提交代码）</h2>
+                <textarea id="code-input" placeholder="// 请在此处写下你的 C++ 代码...&#10;#include &lt;iostream&gt;&#10;using namespace std;&#10;int main() { ... }"></textarea>
+                <button id="submit-btn">🚀 呈递御览</button>
+            </section>
+
+            <section id="result-area" class="hidden">
+                <h2>📊 批阅结果</h2>
+                <div id="score-display" class="score">待批阅...</div>
+                <div id="details-grid" class="details-grid"></div>
+                <img id="success-img" src="https://mgdyqaq.github.io/good.png" alt="Perfect!" class="hidden">
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
