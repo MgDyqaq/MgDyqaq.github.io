@@ -22,10 +22,10 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
     // WARNING: Exposing PAT in client-side JS is insecure. Use a backend or GitHub App.
     
     try {
-        await fetch(`https://api.github.com/repos/YOUR_USERNAME/YOUR_REPO/actions/workflows/judge.yml/dispatches`, {
+        await fetch(`https://api.github.com/repos/MgDyqaq/MgDyqaq.github.io/actions/workflows/judge.yml/dispatches`, {
             method: 'POST',
             headers: {
-                'Authorization': 'token YOUR_PAT_TOKEN', // Replace with your PAT
+                'Authorization': 'token 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', // Replace with your PAT
                 'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
@@ -64,7 +64,7 @@ async function pollResult(runId) {
         attempts++;
         try {
             // Fetch result from results-branch raw URL
-            const response = await fetch(`https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/results-branch/results/${runId}.json`);
+            const response = await fetch(`https://raw.githubusercontent.com/MgDyqaq/MgDyqaq.github.io/results-branch/results/${runId}.json`);
             
             if (response.ok) {
                 const data = await response.json();
