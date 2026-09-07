@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>A+B 在线评测 | MingDynasty</title>
+  
+    <link rel="icon" href="https://MingDynasty1.github.io/000000000000000000.png" type="image/png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #1e1e2e; 
+            color: #cdd6f4; 
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .title { font-size: 28px; color: #89b4fa; }
+        
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .status-idle { background: #313244; color: #a6adc8; }
+        .status-running { background: #f9e2af; color: #1e1e2e; }
+        .status-ac { background: #a6e3a1; color: #1e1e2e; }
+        .status-wa { background: #f38ba8; color: #1e1e2e; }
+        .status-tle { background: #fab387; color: #1e1e2e; }
+        .status-re { background: #f38ba8; color: #1e1e2e; }
+        .status-ce { background: #cba6f7; color: #1e1e2e; }
+        
+        .editor-container {
+            height: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #313244;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #89b4fa;
+            color: #1e1e2e;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #74c7ec;
+            transform: translateY(-2px);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #313244;
+            color: #cdd6f4;
+        }
+        .btn-secondary:hover {
+            background: #45475a;
+        }
+        
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            color: #a6adc8;
+        }
+        .loading.active { display: flex; }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #45475a;
+            border-top: 3px solid #89b4fa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result-area {
+            background: #313244;
+            border-radius: 8px;
+            padding: 20px;
+            display: none;
+        }
+        .result-area.show { display: block; }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .result-item {
+            background: #45475a;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .result-item .label {
+            font-size: 12px;
+            color: #a6adc8;
+            text-transform: uppercase;
+        }
+        .result-item .value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .value.ac { color: #a6e3a1; }
+        .value.wa { color: #f38ba8; }
+        .value.tle { color: #fab387; }
+        .value.re { color: #f38ba8; }
+        .value.ce { color: #cba6f7; }
+        
+        .testcase-details {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .testcase-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid #45475a;
+        }
+        .tag {
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .tag.ac { background: #a6e3a1; color: #1e1e2e; }
+        .tag.wa { background: #f38ba8; color: #1e1e2e; }
+        .tag.tle { background: #fab387; color: #1e1e2e; }
+        .tag.re { background: #f38ba8; color: #1e1e2e; }
+        .tag.ce { background: #cba6f7; color: #1e1e2e; }
+        
+        .domain-info {
+            color: #a6adc8;
+            font-size: 14px;
+            margin-left: auto;
+        }
+        .domain-info span {
+            color: #89b4fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">📝 A+B Problem</div>
+            <div>
+                <span class="status-badge status-idle" id="statusBadge">⏸️ 就绪</span>
+            </div>
+        </div>
+        
+        <div class="editor-container" id="editor"></div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" id="submitBtn">🚀 提交评测</button>
+            <button class="btn btn-secondary" id="resetBtn">↺ 重置代码</button>
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <span>评测中...</span>
+                <span id="runIdText"></span>
+            </div>
+            <div class="domain-info">
+                🌐 <span id="apiStatus">连接中...</span>
+            </div>
+        </div>
+        
+        <div class="result-area" id="resultArea">
+            <h3>📊 评测结果</h3>
+            <div class="result-grid" id="resultGrid"></div>
+            <div class="testcase-details" id="testcaseDetails"></div>
+        </div>
+    </div>
+
+    <!-- 使用国内 CDN 加载 Monaco -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.34.1/min/vs/loader.min.js"></script>
+    
+    <script>
+        // ========================================
+        // 配置 - 改成你的域名！
+        // ========================================
+        const WORKER_URL = 'https://luogu.ccwu.cc';  // 👈 改成你的域名
+        
+        // ========================================
+        // 初始化编辑器
+        // ========================================
+        let editor;
+        require.config({ 
+            paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.34.1/min/vs' } 
+        });
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: `#include <bits/stdc++.h>
+        using namespace std;
+        
+        int main() {
+            int a, b;
+            cin >> a >> b;
+            cout << a + b << endl;
+            return 0;
+        }`,
+                language: 'cpp',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: false }
+            });
+            
+            // 检查 API 是否可用
+            checkApiStatus();
+        });
+        
+        // ========================================
+        // DOM 引用
+        // ========================================
+        const statusBadge = document.getElementById('statusBadge');
+        const submitBtn = document.getElementById('submitBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const resultArea = document.getElementById('resultArea');
+        const resultGrid = document.getElementById('resultGrid');
+        const testcaseDetails = document.getElementById('testcaseDetails');
+        const runIdText = document.getElementById('runIdText');
+        const apiStatus = document.getElementById('apiStatus');
+        
+        // ========================================
+        // 检查 API 状态
+        // ========================================
+        async function checkApiStatus() {
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: 'OPTIONS',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                apiStatus.textContent = '✅ 已连接';
+                apiStatus.style.color = '#a6e3a1';
+            } catch (error) {
+                apiStatus.textContent = '❌ 连接失败';
+                apiStatus.style.color = '#f38ba8';
+                console.warn('API 连接失败:', error);
+            }
+        }
+        
+        // ========================================
+        // 辅助函数
+        // ========================================
+        function setStatus(text, className) {
+            statusBadge.textContent = text;
+            statusBadge.className = 'status-badge ' + className;
+        }
+        
+        function showLoading(show) {
+            loadingIndicator.classList.toggle('active', show);
+            submitBtn.disabled = show;
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // ========================================
+        // 提交代码
+        // ========================================
+        async function submitCode() {
+            const code = editor.getValue();
+            if (!code.trim()) {
+                alert('请先编写代码！');
+                return;
+            }
+            
+            setStatus('⏳ 提交中...', 'status-running');
+            showLoading(true);
+            resultArea.classList.remove('show');
+            
+            try {
+                console.log('📤 提交代码到:', WORKER_URL);
+                
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'submit',
+                        code: code
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('📥 响应:', data);
+                
+                if (!response.ok) {
+                    throw new Error(data.error || '提交失败');
+                }
+                
+                const runId = data.runId;
+                runIdText.textContent = `#${runId}`;
+                console.log('✅ 评测已启动，Run ID:', runId);
+                
+                await pollResult(runId);
+                
+            } catch (error) {
+                console.error('❌ 错误:', error);
+                setStatus('❌ 失败', 'status-re');
+                alert('评测失败: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // ========================================
+        // 轮询结果
+        // ========================================
+        async function pollResult(runId, maxAttempts = 60, interval = 3000) {
+            for (let i = 0; i < maxAttempts; i++) {
+                await sleep(interval);
+                
+                try {
+                    const response = await fetch(WORKER_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'status',
+                            runId: runId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    setStatus(`⏳ 评测中 (${i+1}/${maxAttempts})...`, 'status-running');
+                    
+                    if (data.status === 'completed') {
+                        if (data.conclusion === 'success' && data.result) {
+                            displayResults(data.result);
+                            return;
+                        } else {
+                            throw new Error(`评测失败: ${data.conclusion || '未知错误'}`);
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.warn('轮询出错:', error);
+                }
+            }
+            
+            throw new Error('评测超时，请稍后查看结果');
+        }
+        
+        // ========================================
+        // 显示结果
+        // ========================================
+        function displayResults(result) {
+            const statusMap = {
+                'AC': { label: '✅ 答案正确', class: 'ac' },
+                'WA': { label: '❌ 答案错误', class: 'wa' },
+                'TLE': { label: '⏰ 运行超时', class: 'tle' },
+                'RE': { label: '💥 运行时错误', class: 're' },
+                'CE': { label: '🔧 编译错误', class: 'ce' },
+                'MLE': { label: '💾 内存超限', class: 'mle' }
+            };
+            
+            const finalStatus = result.final_status || 'WA';
+            const statusInfo = statusMap[finalStatus] || statusMap['WA'];
+            
+            setStatus(`${statusInfo.label}`, `status-${finalStatus.toLowerCase()}`);
+            
+            resultArea.classList.add('show');
+            
+            const passed = result.passed || 0;
+            const total = result.total || 0;
+            resultGrid.innerHTML = `
+                <div class="result-item">
+                    <div class="label">最终结果</div>
+                    <div class="value ${finalStatus.toLowerCase()}">${finalStatus}</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">通过用例</div>
+                    <div class="value">${passed} / ${total}</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">总用时</div>
+                    <div class="value">${result.total_time || 'N/A'}s</div>
+                </div>
+            `;
+            
+            if (result.details && result.details.length > 0) {
+                testcaseDetails.innerHTML = result.details.map((d, i) => `
+                    <div class="testcase-row">
+                        <span>用例 #${i+1}</span>
+                        <span>
+                            <span class="tag ${(d.status || 'WA').toLowerCase()}">${d.status || 'WA'}</span>
+                            ${d.time ? ` ${d.time.toFixed(3)}s` : ''}
+                        </span>
+                    </div>
+                `).join('');
+            } else {
+                testcaseDetails.innerHTML = '<p style="color:#a6adc8;">暂无详细数据</p>';
+            }
+        }
+        
+        // ========================================
+        // 事件绑定
+        // ========================================
+        submitBtn.addEventListener('click', submitCode);
+        
+        resetBtn.addEventListener('click', function() {
+            editor.setValue(`#include <bits/stdc++.h>
+        using namespace std;
+        
+        int main() {
+            int a, b;
+            cin >> a >> b;
+            cout << a + b << endl;
+            return 0;
+        }`);
+            resultArea.classList.remove('show');
+            setStatus('⏸️ 就绪', 'status-idle');
+        });
+        
+        // 初始状态
+        setStatus('⏸️ 就绪', 'status-idle');
+        console.log('✅ 页面加载完成！');
+        console.log('📡 API 地址:', WORKER_URL);
+    </script>
+</body>
+</html>
