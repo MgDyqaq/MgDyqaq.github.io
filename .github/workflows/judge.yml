@@ -1,116 +1,28 @@
-name: Judge C++ Code
+name: Online Judge
 
 on:
-  workflow_dispatch:
-    inputs:
-      code:
-        description: 'C++ Source Code'
-        required: true
-      run_id:
-        description: 'Unique Run ID for polling'
-        required: true
+  workflow_dispatch:  # 手动触发
 
 jobs:
   judge:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install g++
-        run: sudo apt-get update && sudo apt-get install -y g++
-
-      - name: Save User Code
-        run: |
-          mkdir -p submission
-          echo "${{ github.event.inputs.code }}" > submission/main.cpp
-
-      - name: Compile
-        run: |
-          cd submission
-          g++ -O2 -std=c++17 -o main main.cpp
-          if [ $? -ne 0 ]; then
-            echo "COMPILE_ERROR" > result.json
-            exit 1
-          fi
-
-      - name: Run Tests
-        run: |
-          cd submission
-          TOTAL_SCORE=0
-          RESULTS="[]"
-          
-          for i in {1..40}; do
-            INPUT_FILE="../test/${i}.in"
-            OUTPUT_FILE="../test/${i}.out"
-            
-            # 设置资源限制: 512MB 内存, 1s CPU 时间
-            # ulimit -v 524288 (KB), ulimit -t 1 (seconds)
-            STATUS="AC"
-            USER_OUTPUT=""
-            
-            # 运行程序
-            bash -c 'ulimit -v 524288; ulimit -t 1; timeout 2s ./main < "$INPUT_FILE" > user_out.txt 2> err.txt'
-            EXIT_CODE=$?
-            
-            if [ $EXIT_CODE -eq 124 ] || [ $EXIT_CODE -eq 137 ]; then
-              # TLE or MLE (killed by timeout or ulimit)
-              if grep -q "Killed" err.txt || [ $EXIT_CODE -eq 137 ]; then
-                STATUS="MLE"
-              else
-                STATUS="TLE"
-              fi
-            elif [ $EXIT_CODE -ne 0 ]; then
-              STATUS="RE" # Runtime Error
-            else
-              # Check Output
-              if diff -b -B -w user_out.txt "$OUTPUT_FILE" > /dev/null; then
-                STATUS="AC"
-                TOTAL_SCORE=$((TOTAL_SCORE + 2.5))
-              else
-                STATUS="WA"
-              fi
-            fi
-            
-            # Append result to JSON array string (simple concatenation for demo)
-            # In production, use jq or python to build proper JSON
-            RESULTS="${RESULTS}{\"id\":${i},\"status\":\"${STATUS}\"},"
-          done
-          
-          # Remove trailing comma and close array
-          RESULTS="[${RESULTS%,}]"
-          
-          # Create final result JSON
-          cat <<EOF > result.json
-          {
-            "score": ${TOTAL_SCORE},
-            "details": ${RESULTS},
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          }
-          EOF
-
-      - name: Upload Result
-        uses: actions/upload-artifact@v4
-        with:
-          name: result-${{ github.event.inputs.run_id }}
-          path: submission/result.json
-      
-      - name: Deploy Result to Pages (Optional but recommended for easy access)
-        run: |
-          mkdir -p results
-          cp submission/result.json results/${{ github.event.inputs.run_id }}.json
-          # Note: You need to commit this back to repo or use a separate storage 
-          # For simplicity in this tutorial, we'll assume the frontend polls a specific API or file.
-          # Since GitHub Pages is static, we can't easily write back. 
-          # WORKAROUND: We will use GitHub Gists or a simple backend-less approach.
-          # BUT, for this tutorial, let's use a trick: Commit the result to a branch!
-          
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git checkout -b results-branch || git checkout results-branch
-          git pull origin results-branch || true
-          mkdir -p results
-          cp submission/result.json results/${{ github.event.inputs.run_id }}.json
-          git add results/${{ github.event.inputs.run_id }}.json
-          git commit -m "Add result for run ${{ github.event.inputs.run_id }}"
-          git push origin results-branch
+    - uses: actions/checkout@v4
+    
+    - name: Setup
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ python3
+    
+    - name: Run judge
+      run: |
+        cd judge
+        python3 judge.py > result.json
+        cat result.json
+        echo "RESULT_JSON:$(cat result.json)"
+    
+    - name: Upload result
+      uses: actions/upload-artifact@v4
+      with:
+        name: judge-result
+        path: judge/result.json
