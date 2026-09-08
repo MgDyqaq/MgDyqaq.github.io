@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
-int a,b;
+long long a,b;
 int main()
 {
     cin>>a>>b;
